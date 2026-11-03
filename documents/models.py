@@ -50,3 +50,40 @@ class Document(models.Model):
 
     def __str__(self):
         return self.title
+
+class DocumentPermission(models.Model):
+
+    class PermissionType(models.TextChoices):
+        READ = "READ", "Read"
+        EDIT = "EDIT", "Edit"
+
+    document = models.ForeignKey(
+        Document,
+        on_delete=models.CASCADE,
+        related_name="permissions"
+    )
+
+    user = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.CASCADE,
+        related_name="document_permissions"
+    )
+
+    permission = models.CharField(
+        max_length=10,
+        choices=PermissionType.choices
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    granted_at = models.DateTimeField(auto_now_add=True)
+
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["document", "user", "permission"],
+                name="unique_document_user_permission"
+            )
+        ]
