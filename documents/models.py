@@ -1,13 +1,14 @@
 import uuid
 import os
-from .validators import validate_document_file
+
 from django.db import models
 from django.conf import settings
+
+from .validators import validate_document_file
 
 
 def private_document_path(instance, filename):
     extension = os.path.splitext(filename)[1].lower()
-
     return f"documents/{uuid.uuid4().hex}{extension}"
 
 
@@ -27,7 +28,6 @@ class Document(models.Model):
     )
 
     title = models.CharField(max_length=200)
-
     description = models.TextField(blank=True)
 
     category = models.CharField(
@@ -35,21 +35,21 @@ class Document(models.Model):
         choices=Category.choices,
         default=Category.OTHER
     )
+
     file = models.FileField(
-    upload_to=private_document_path,
-    validators=[validate_document_file]
-)
+        upload_to=private_document_path,
+        validators=[validate_document_file]
+    )
 
     original_filename = models.CharField(max_length=255)
-
     file_size = models.PositiveBigIntegerField()
 
     created_at = models.DateTimeField(auto_now_add=True)
-
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.title
+
 
 class DocumentPermission(models.Model):
 
@@ -64,7 +64,7 @@ class DocumentPermission(models.Model):
     )
 
     user = models.ForeignKey(
-        "accounts.User",
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="document_permissions"
     )
@@ -87,3 +87,10 @@ class DocumentPermission(models.Model):
                 name="unique_document_user_permission"
             )
         ]
+
+    def __str__(self):
+        return (
+            f"{self.document.title} - "
+            f"{self.user.username} - "
+            f"{self.permission}"
+        )

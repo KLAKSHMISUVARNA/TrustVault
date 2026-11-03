@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Grant Permission | TrustVault</title>
+</head>
+<body>
+
+<h2>Grant Document Access</h2>
+
+<h3>{{ document.title }}</h3>
+
+<form method="POST">
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <button type="submit">Grant Access</button>
+</form>
+
+<a href="{% url 'manage_permissions' document.id %}">
+    Manage Permissions
+</a>
+
+</body>
+</html>

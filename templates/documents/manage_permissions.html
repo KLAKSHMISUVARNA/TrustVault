@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Permissions | TrustVault</title>
+</head>
+<body>
+
+<h2>Document Permissions</h2>
+
+<h3>{{ document.title }}</h3>
+
+<a href="{% url 'grant_permission' document.id %}">
+    Grant New Access
+</a>
+
+<table border="1">
+
+<tr>
+    <th>User</th>
+    <th>Permission</th>
+    <th>Status</th>
+    <th>Action</th>
+</tr>
+
+{% for permission in permissions %}
+
+<tr>
+    <td>{{ permission.user.username }}</td>
+
+    <td>{{ permission.get_permission_display }}</td>
+
+    <td>
+        {% if permission.is_active %}
+            Active
+        {% else %}
+            Revoked
+        {% endif %}
+    </td>
+
+    <td>
+        {% if permission.is_active %}
+        <form method="POST"
+              action="{% url 'revoke_permission' permission.id %}">
+
+            {% csrf_token %}
+
+            <button type="submit">Revoke</button>
+
+        </form>
+        {% endif %}
+    </td>
+</tr>
+
+{% empty %}
+
+<tr>
+    <td colspan="4">No permissions granted.</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+</body>
+</html>
