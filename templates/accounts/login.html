@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TrustVault Login</title>
+</head>
+<body>
+
+<h2>TrustVault Login</h2>
+
+{% if form.errors %}
+<p>Invalid username or password.</p>
+{% endif %}
+
+<form method="POST">
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <button type="submit">Login</button>
+</form>
+
+<a href="{% url 'register' %}">Create Account</a>
+
+</body>
+</html>
