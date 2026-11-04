@@ -9,9 +9,9 @@ https://docs.djangoproject.com/en/6.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
-
+import os
 from pathlib import Path
-
+AUDIT_HMAC_KEY = os.getenv('AUDIT_HMAC_KEY', 'default-local-dev-hmac-key-must-be-rotated-in-prod').encode('utf-8')
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -118,7 +118,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
-
+STATICFILES_DIRS = [BASE_DIR / "static"]
+# Private document storage
+# Files are stored locally but are not exposed through public URLs.
+MEDIA_ROOT = BASE_DIR / "private_storage"
+# Security Hardening Response Headers
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration

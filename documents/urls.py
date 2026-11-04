@@ -2,6 +2,23 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path(
+        "",
+        views.document_list,
+        name="document_list"
+    ),
+
+    path(
+        "upload/",
+        views.upload_document,
+        name="upload_document"
+    ),
+
+    path(
+        "<int:document_id>/download/",
+        views.download_document,
+        name="download_document"
+    ),
 
     path(
         "<int:document_id>/grant/",
@@ -20,5 +37,4 @@ urlpatterns = [
         views.revoke_permission,
         name="revoke_permission"
     ),
-
 ]
