@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Logs - TrustVault Admin</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="{% url 'dashboard' %}" class="navbar-brand">🔒 TrustVault Admin</a>
+    <div class="nav-links">
+        <span>Identity: <strong>{{ request.user.username }}</strong> (<span class="badge badge-owner">System Administrator</span>)</span>
+        <a href="{% url 'dashboard' %}">🏠 Control Center</a>
+        <form action="{% url 'logout' %}" method="POST" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+</nav>
+
+<div class="container">
+    <h2>Immutable Operations Security Log</h2>
+    <p class="text-muted">Review cryptographic state events, authentication evaluations, and transaction anomalies.</p>
+    
+    <hr style="border-color: var(--border-color); margin: 2rem 0;">
+
+    <div class="card" style="padding: 0; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="background-color: var(--bg-primary); border-bottom: 2px solid var(--border-color);">
+                    <th style="padding: 1rem;">Timestamp</th>
+                    <th style="padding: 1rem;">Actor</th>
+                    <th style="padding: 1rem;">Event Action</th>
+                    <th style="padding: 1rem;">Resource Scope</th>
+                    <th style="padding: 1rem;">Hash Integrity</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in audit_events %}
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 1rem; font-size: 0.9rem;">{{ event.created_at|date:"Y-m-d H:i:s" }}</td>
+                    <td style="padding: 1rem;"><strong>{{ event.actor.username }}</strong></td>
+                    <td style="padding: 1rem;">
+                        {% if "DENIED" in event.action or "FAIL" in event.action %}
+                            <span class="badge" style="background-color: var(--accent-danger); color: white;">{{ event.action }}</span>
+                        {% else %}
+                            <span class="badge" style="background-color: var(--bg-primary); color: var(--accent-blue);">{{ event.action }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem; font-size: 0.9rem; color: var(--text-muted);">
+                        Type: {{ event.target_type }} (ID: {{ event.target_id }})
+                    </td>
+                    <td style="padding: 1rem; font-family: monospace; font-size: 0.8rem; color: var(--accent-success);">
+                        {{ event.current_hash|slice:":16" }}...
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="padding: 3rem; text-align: center; color: var(--text-muted);">No system tracking blocks found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

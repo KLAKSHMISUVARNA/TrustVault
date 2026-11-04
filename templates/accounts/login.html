@@ -1,25 +1,52 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>TrustVault Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - TrustVault</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
 
-<h2>TrustVault Login</h2>
+<nav class="navbar">
+    <a href="#" class="navbar-brand">🔒 TrustVault</a>
+</nav>
 
-{% if form.errors %}
-<p>Invalid username or password.</p>
-{% endif %}
+<div class="container" style="max-width: 450px; margin-top: 5rem;">
+    <div class="card" style="padding: 2.5rem;">
+        <h2 style="margin-top: 0; text-align: center; color: var(--accent-blue);">TrustVault Login</h2>
+        <p class="text-muted" style="text-align: center; font-size: 0.9rem; margin-bottom: 2rem;">
+            Provide security credentials to open your secure vault.
+        </p>
 
-<form method="POST">
-    {% csrf_token %}
+        <form method="POST">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div style="color: var(--accent-danger); margin-bottom: 1rem; font-size: 0.9rem;">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            {% for field in form %}
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">{{ field.label }}</label>
+                    <input type="{{ field.field.widget.input_type }}" name="{{ field.html_name }}" 
+                           style="width: 100%; padding: 0.75rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; color: white; box-sizing: border-box;">
+                    {% if field.errors %}
+                        <small style="color: var(--accent-danger);">{{ field.errors.0 }}</small>
+                    {% endif %}
+                </div>
+            {% endfor %}
 
-    {{ form.as_p }}
+            <button type="submit" class="btn" style="width: 100%; padding: 0.75rem; margin-top: 1rem;">Sign In Securely</button>
+        </form>
 
-    <button type="submit">Login</button>
-</form>
-
-<a href="{% url 'register' %}">Create Account</a>
+        <div style="text-align: center; margin-top: 1.5rem;">
+            <a href="{% url 'register' %}" style="color: var(--accent-blue); text-decoration: none; font-size: 0.9rem;">Need an account? Create one here</a>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

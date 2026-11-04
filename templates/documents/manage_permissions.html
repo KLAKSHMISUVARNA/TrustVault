@@ -1,65 +1,72 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Manage Permissions | TrustVault</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Access Control - TrustVault</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
 
-<h2>Document Permissions</h2>
+<nav class="navbar">
+    <a href="{% url 'document_list' %}" class="navbar-brand">🔒 TrustVault</a>
+    <div class="nav-links">
+        <a href="{% url 'document_list' %}">📁 Back to Vault</a>
+    </div>
+</nav>
 
-<h3>{{ document.title }}</h3>
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h2>Access Registry: <span style="color: var(--accent-blue);">{{ document.title }}</span></h2>
+            <p class="text-muted" style="margin: 0;">Review account profiles with active and historical visibility mapping metrics.</p>
+        </div>
+        <a href="{% url 'grant_permission' document.id %}" class="btn">➕ Grant New Access</a>
+    </div>
 
-<a href="{% url 'grant_permission' document.id %}">
-    Grant New Access
-</a>
-
-<table border="1">
-
-<tr>
-    <th>User</th>
-    <th>Permission</th>
-    <th>Status</th>
-    <th>Action</th>
-</tr>
-
-{% for permission in permissions %}
-
-<tr>
-    <td>{{ permission.user.username }}</td>
-
-    <td>{{ permission.get_permission_display }}</td>
-
-    <td>
-        {% if permission.is_active %}
-            Active
-        {% else %}
-            Revoked
-        {% endif %}
-    </td>
-
-    <td>
-        {% if permission.is_active %}
-        <form method="POST"
-              action="{% url 'revoke_permission' permission.id %}">
-
-            {% csrf_token %}
-
-            <button type="submit">Revoke</button>
-
-        </form>
-        {% endif %}
-    </td>
-</tr>
-
-{% empty %}
-
-<tr>
-    <td colspan="4">No permissions granted.</td>
-</tr>
-
-{% endfor %}
-
-</table>
+    <div class="card" style="padding: 0; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="background-color: var(--bg-primary); border-bottom: 2px solid var(--border-color);">
+                    <th style="padding: 1rem;">User Account ID</th>
+                    <th style="padding: 1rem;">Permission Type</th>
+                    <th style="padding: 1rem;">Authorization State</th>
+                    <th style="padding: 1rem; text-align: right;">Revocation Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for perm in permissions %}
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 1rem;"><strong>{{ perm.user.username }}</strong></td>
+                    <td style="padding: 1rem;"><span class="badge badge-permission">{{ perm.permission }}</span></td>
+                    <td style="padding: 1rem;">
+                        {% if perm.is_active %}
+                            <span class="badge" style="background-color: var(--accent-success); color: white;">Active</span>
+                        {% else %}
+                            <span class="badge" style="background-color: var(--border-color); color: var(--text-muted);">Revoked</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem; text-align: right;">
+                        {% if perm.is_active %}
+                            <form action="{% url 'revoke_permission' perm.id %}" method="POST" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">Revoke Access</button>
+                            </form>
+                        {% else %}
+                            <span class="text-muted" style="font-size: 0.9rem;">No action</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="padding: 3rem; text-align: center; color: var(--text-muted);">No individual access rules have been explicitly mapped to this asset node yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 
 </body>
 </html>

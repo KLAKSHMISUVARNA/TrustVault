@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Document - TrustVault</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="{% url 'document_list' %}" class="navbar-brand">🔒 TrustVault</a>
+    <div class="nav-links">
+        <a href="{% url 'document_list' %}">📁 Back to Vault</a>
+    </div>
+</nav>
+
+<div class="container" style="max-width: 650px; margin-top: 3rem;">
+    <div class="card" style="padding: 2.5rem;">
+        <h2 style="margin-top: 0; color: var(--accent-blue);">Upload New Asset</h2>
+        <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 2rem;">
+            Add a file node to your secure private storage repository.
+        </p>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div style="color: var(--accent-danger); margin-bottom: 1rem;">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            {% for field in form %}
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">{{ field.label }}</label>
+                    
+                    {% if field.field.widget.input_type == 'file' %}
+                        <div style="padding: 1rem; background: var(--bg-primary); border: 1px dashed var(--border-color); border-radius: 4px; text-align: center;">
+                            <input type="file" name="{{ field.html_name }}" style="color: var(--text-muted);">
+                        </div>
+                    {% elif field.html_name == 'description' %}
+                        <textarea name="{{ field.html_name }}" rows="4" style="width: 100%; padding: 0.75rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; color: white; box-sizing: border-box; font-family: inherit; resize: vertical;"></textarea>
+                    {% elif field.field.choices %}
+                        <select name="{{ field.html_name }}" style="width: 100%; padding: 0.75rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; color: white; box-sizing: border-box;">
+                            {% for value, text in field.field.choices %}
+                                <option value="{{ value }}">{{ text }}</option>
+                            {% endfor %}
+                        </select>
+                    {% else %}
+                        <input type="text" name="{{ field.html_name }}" style="width: 100%; padding: 0.75rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; color: white; box-sizing: border-box;">
+                    {% endif %}
+
+                    {% if field.errors %}
+                        <small style="color: var(--accent-danger); display: block; margin-top: 0.25rem;">{{ field.errors.0 }}</small>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn" style="width: 100%; padding: 0.75rem; margin-top: 1rem;">Publish Document Securely</button>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>
