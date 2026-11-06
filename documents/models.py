@@ -46,7 +46,14 @@ class Document(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    def save(self, *args, **kwargs):
+        # Auto-populate file_size from file if not explicitly set
+        if not self.file_size and self.file:
+            try:
+                self.file_size = self.file.size
+            except Exception:
+                pass
+        super().save(*args, **kwargs)
     def __str__(self):
         return self.title
 

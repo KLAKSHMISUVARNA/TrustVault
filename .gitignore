@@ -1,10 +1,30 @@
-.venv/
-venv/
+# Python artifacts
+*.pyc
 __pycache__/
-*.py[cod]
-db.sqlite3
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Environment secrets
 .env
+.env.*
+
+# Local databases
+db.sqlite3
+db.sqlite3-journal
+*.db
+
+# Private uploaded documents
+private_storage/
 media/
 staticfiles/
-*.log
-private_storage/
+
+# Test & OS caches
+.pytest_cache/
+.coverage
+htmlcov/
+Thumbs.db
+.DS_Store

@@ -1,13 +1,24 @@
-from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
+from django.core.exceptions import PermissionDenied
+from django.shortcuts import render
 from .models import AuditEvent
+from .services import verify_audit_chain
+
 
 @login_required
 def admin_audit_dashboard(request):
-    # Enforce strict server-side evaluation bounds matching requirements
-    if request.user.role != 'ADMIN':
-        return HttpResponseForbidden("Access evaluation mapping constraints failed to resolve execution privileges.")
-        
-    events = AuditEvent.objects.all().order_by('-created_at')
-    return render(request, 'audit/admin_dashboard.html', {'audit_events': events})
+    if getattr(request.user, "role", None) != "ADMIN":
+        raise PermissionDenied("Only administrators can view the audit trail.")
+
+    # Fixed: use 'timestamp' instead of 'created_at'
+    events = AuditEvent.objects.all().order_by("-timestamp")
+    is_valid = verify_audit_chain()
+
+    return render(
+        request,
+        "audit/admin_dashboard.html",
+        {
+            "events": events,
+            "chain_valid": is_valid,
+        },
+    )

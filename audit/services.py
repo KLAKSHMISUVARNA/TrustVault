@@ -104,3 +104,21 @@ def verify_audit_chain():
         expected_previous_hash = event.event_hash
 
     return True
+def record_audit_event(actor, document, action, details="", ip_address=None):
+    """
+    Adapter mapping views/permissions parameters to record_event().
+    """
+    target_id = str(document.id) if document else ""
+    metadata = {}
+    if details:
+        metadata["details"] = details
+    if ip_address:
+        metadata["ip_address"] = ip_address
+
+    return record_event(
+        actor=actor,
+        action=action,
+        target_type="document",
+        target_id=target_id,
+        metadata=metadata,
+    )

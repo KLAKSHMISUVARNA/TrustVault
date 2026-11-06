@@ -1,33 +1,48 @@
-from .models import DocumentPermission
+from audit.services import record_audit_event
+from django.core.exceptions import PermissionDenied
 
 
-def can_access_document(user, document, permission="READ"):
+def get_client_ip(request):
+  x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+  if x_forwarded_for:
+    return x_forwarded_for.split(",")[0].strip()
+  return request.META.get("REMOTE_ADDR")
 
-    if not user.is_authenticated or not user.is_active:
-        return False
 
-    # Document owner has full access
-    if document.owner_id == user.id:
-        return True
+def can_access_document(user, document, required_permission="READ"):
+  if not user.is_authenticated or not user.is_active:
+    return False
 
-    # Administrators do not automatically access documents
-    if user.role == "ADMIN":
-        return False
+  if getattr(user, "role", None) == "ADMIN":
+    return True
 
-    allowed_permissions = ["READ"]
+  if document.owner_id == user.id:
+    return True
 
-    if permission == "EDIT":
-        allowed_permissions = ["EDIT"]
+  perm_query = document.permissions.filter(
+      user=user,
+      is_active=True,
+  )
 
-    elif permission == "READ":
-        allowed_permissions = ["READ", "EDIT"]
+  if required_permission == "EDIT":
+    return perm_query.filter(permission="EDIT").exists()
+  else:
+    return perm_query.filter(permission__in=["READ", "EDIT"]).exists()
 
-    else:
-        return False
 
-    return DocumentPermission.objects.filter(
+def check_document_access(request, document, required_level="READ"):
+  user = request.user
+
+  if not can_access_document(
+      user, document, required_permission=required_level
+  ):
+    record_audit_event(
+        actor=user if user.is_authenticated else None,
         document=document,
-        user=user,
-        permission__in=allowed_permissions,
-        is_active=True
-    ).exists()
+        action="DOCUMENT_ACCESS_DENIED",
+        details=f"Denied {required_level} attempt on document {document.id}",
+        ip_address=get_client_ip(request),
+    )
+    raise PermissionDenied("You do not have permission to perform this action.")
+
+  return True

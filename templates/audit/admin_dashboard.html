@@ -41,8 +41,8 @@
             <tbody>
                 {% for event in audit_events %}
                 <tr style="border-bottom: 1px solid var(--border-color);">
-                    <td style="padding: 1rem; font-size: 0.9rem;">{{ event.created_at|date:"Y-m-d H:i:s" }}</td>
-                    <td style="padding: 1rem;"><strong>{{ event.actor.username }}</strong></td>
+                    <td style="padding: 1rem; font-size: 0.9rem;">{{ event.timestamp|date:"Y-m-d H:i:s" }}</td>
+                    <td style="padding: 1rem;"><strong>{{ event.actor.username|default:"System" }}</strong></td>
                     <td style="padding: 1rem;">
                         {% if "DENIED" in event.action or "FAIL" in event.action %}
                             <span class="badge" style="background-color: var(--accent-danger); color: white;">{{ event.action }}</span>
@@ -54,7 +54,7 @@
                         Type: {{ event.target_type }} (ID: {{ event.target_id }})
                     </td>
                     <td style="padding: 1rem; font-family: monospace; font-size: 0.8rem; color: var(--accent-success);">
-                        {{ event.current_hash|slice:":16" }}...
+                        {{ event.event_hash|slice:":16" }}...
                     </td>
                 </tr>
                 {% empty %}
