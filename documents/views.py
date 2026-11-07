@@ -40,7 +40,8 @@ def document_list(request):
             | Q(owner__username__icontains=query)
         )
 
-    documents = base_qs.select_related("owner").order_by("-uploaded_at")
+    # Fixed: use 'created_at' instead of 'uploaded_at'
+    documents = base_qs.select_related("owner").order_by("-created_at")
 
     template = select_template(["documents/document_list.html", "documents/list.html"])
     return render(
@@ -51,7 +52,6 @@ def document_list(request):
             "query": query,
         },
     )
-
 
 @login_required
 @require_http_methods(["GET", "POST"])
