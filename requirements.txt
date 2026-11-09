@@ -1,5 +1,4 @@
 Django==6.1.2
-PillowDjango==6.1.2
 Pillow
 gunicorn
 whitenoise
