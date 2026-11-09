@@ -40,7 +40,6 @@ def document_list(request):
             | Q(owner__username__icontains=query)
         )
 
-    # Fixed: use 'created_at' instead of 'uploaded_at'
     documents = base_qs.select_related("owner").order_by("-created_at")
 
     template = select_template(["documents/document_list.html", "documents/list.html"])
@@ -52,6 +51,7 @@ def document_list(request):
             "query": query,
         },
     )
+
 
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -123,69 +123,88 @@ def download_document(request, document_id):
 
 
 @login_required
-@require_POST
-def grant_permission(request, document_id):
-    document = get_object_or_404(Document, pk=document_id)
-    if document.owner_id != request.user.id and getattr(request.user, "role", None) != User.Role.ADMIN:
-        raise Http404("Document not found.")
-
-    form = PermissionGrantForm(request.POST)
-    if form.is_valid():
-        target_user = form.cleaned_data["user"]
-        perm_type = form.cleaned_data["permission"]
-
-        if target_user.id == document.owner_id:
-            messages.warning(request, "Document owner already has full permissions.")
-            return redirect("manage_permissions", document_id=document_id)
-
-        with transaction.atomic():
-            perm, created = DocumentPermission.objects.update_or_create(
-                document=document,
-                user=target_user,
-                defaults={
-                    "permission": perm_type,
-                    "is_active": True,
-                    "revoked_at": None,
-                },
-            )
-
-            record_audit_event(
-                actor=request.user,
-                document=document,
-                action="PERMISSION_GRANTED",
-                details=f"Granted {perm_type} to user {target_user.username}",
-                ip_address=get_client_ip(request),
-            )
-
-        messages.success(request, f"Granted {perm_type} permission to {target_user.username}.")
-
-    return redirect("manage_permissions", document_id=document_id)
-
-
-@login_required
-@require_http_methods(["GET", "POST"])
+@require_GET
 def manage_permissions(request, document_id):
     document = get_object_or_404(Document, pk=document_id)
+
+    # RBAC check: only document owner or system admin can view permission summary
     if document.owner_id != request.user.id and getattr(request.user, "role", None) != User.Role.ADMIN:
         raise Http404("Document not found.")
 
-    if request.method == "POST":
-        return grant_permission(request, document_id)
-
-    form = PermissionGrantForm()
-    active_permissions = document.permissions.filter(is_active=True).select_related("user")
+    permissions = DocumentPermission.objects.filter(
+        document=document
+    ).select_related("user").order_by("-id")
 
     template = select_template([
         "documents/manage_permissions.html",
-        "documents/permissions.html",
-        "documents/document_detail.html",
+        "documents/permissions_summary.html",
     ])
+
     return render(
         request,
         template.template.name,
         {
             "document": document,
-            "permissions": active_permissions,
+            "permissions": permissions,
+        },
+    )
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def grant_permission(request, document_id):
+    document = get_object_or_404(Document, pk=document_id)
+
+    # RBAC check: only document owner or system admin can grant permissions
+    if document.owner_id != request.user.id and getattr(request.user, "role", None) != User.Role.ADMIN:
+        raise Http404("Document not found.")
+
+    if request.method == "POST":
+        form = PermissionGrantForm(request.POST)
+        if form.is_valid():
+            target_user = form.cleaned_data["user"]
+            perm_type = form.cleaned_data["permission"]
+
+            if target_user.id == document.owner_id:
+                messages.warning(request, "Document owner already has full permissions.")
+                return redirect("manage_permissions", document_id=document_id)
+
+            with transaction.atomic():
+                perm, created = DocumentPermission.objects.update_or_create(
+                    document=document,
+                    user=target_user,
+                    defaults={
+                        "permission": perm_type,
+                        "is_active": True,
+                        "revoked_at": None,
+                    },
+                )
+
+                record_audit_event(
+                    actor=request.user,
+                    document=document,
+                    action="PERMISSION_GRANTED",
+                    details=f"Granted {perm_type} to user {target_user.username}",
+                    ip_address=get_client_ip(request),
+                )
+
+            messages.success(request, f"Granted {perm_type} permission to {target_user.username}.")
+            return redirect("manage_permissions", document_id=document_id)
+        else:
+            messages.error(request, "Invalid input. Please check the form fields.")
+    else:
+        form = PermissionGrantForm()
+
+    template = select_template([
+        "documents/grant_permission.html",
+        "documents/grant_access.html",
+    ])
+
+    return render(
+        request,
+        template.template.name,
+        {
+            "document": document,
             "form": form,
         },
     )
@@ -217,8 +236,10 @@ def revoke_permission(request, permission_id):
     return redirect("manage_permissions", document_id=document.id)
 
 
+# Function Aliases for URL routing compatibility
 document_list_view = document_list
 upload_document_view = upload_document
 download_document_view = download_document
 manage_permissions_view = manage_permissions
+grant_permission_view = grant_permission
 revoke_permission_view = revoke_permission
